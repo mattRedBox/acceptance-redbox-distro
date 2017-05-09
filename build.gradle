@@ -1,0 +1,191 @@
+/*
+ *
+ *  * Copyright (C) 2017. Queensland Cyber Infrastructure Foundation (http://www.qcif.edu.au/)
+ *  *
+ *  * This program is free software: you can redistribute it and/or modify
+ *  * it under the terms of the GNU General Public License as published by
+ *  * the Free Software Foundation; either version 2 of the License, or
+ *  * (at your option) any later version.
+ *  *
+ *  * This program is distributed in the hope that it will be useful,
+ *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  * GNU General Public License for more details.
+ *  *
+ *  * You should have received a copy of the GNU General Public License along
+ *  * with this program; if not, write to the Free Software Foundation, Inc.,
+ *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ */
+
+import org.apache.tools.ant.taskdefs.condition.Os
+
+group 'au.com.redboxresearchdata'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'groovy'
+apply plugin: 'java'
+apply plugin: 'idea'
+apply from: "gradle/osSpecificDownloads.gradle"
+apply plugin: "geb-saucelabs"
+
+buildscript {
+    ext {
+        // The drivers we want to use
+        drivers = ["firefox", "chrome", "phantomjs", "remotefirefox", "remotechrome", "saucelabs"]
+
+        groovyVersion = '2.4.8'
+        gebVersion = '1.1.1'
+        seleniumVersion = '2.53.1' //later versions require geckodriver for firefox
+        chromeDriverVersion = '2.24'
+        phantomJsVersion = '2.1.1'
+        ciSauceVersion = '1.116'
+        sauceJavaVersion = '2.1.21'
+        sauceRestVersion = '1.0.33'
+        sauceSeleniumVersion = '1.2'
+        cucumberVersion = '1.2.5'
+        junitVersion = '4.12'
+    }
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "org.gebish:geb-gradle:${gebVersion}"
+        classpath "org.gebish:geb-core:${gebVersion}"
+        classpath "org.gebish:geb-spock:${gebVersion}"
+    }
+}
+
+sourceCompatibility = 1.8
+
+repositories {
+    maven {
+        url "https://repository-saucelabs.forge.cloudbees.com/release"
+    }
+    jcenter()
+}
+
+dependencies {
+    //groovy
+    compile "org.codehaus.groovy:groovy-all:$groovyVersion"
+    //logging
+    compile "org.slf4j:slf4j-api:1.7.13"
+    compile "org.slf4j:slf4j-simple:1.7.13"
+    // selenium drivers
+    testCompile "org.seleniumhq.selenium:selenium-api:$seleniumVersion"
+    testCompile "org.seleniumhq.selenium:selenium-support:$seleniumVersion"
+    testCompile "org.seleniumhq.selenium:selenium-ie-driver:$seleniumVersion"
+    testCompile "org.seleniumhq.selenium:selenium-chrome-driver:$seleniumVersion"
+    testCompile "org.seleniumhq.selenium:selenium-firefox-driver:$seleniumVersion"
+    testCompile "org.seleniumhq.selenium:selenium-remote-driver:$seleniumVersion"
+    // using a custom version of phantomjs driver for now as the original one does not support WebDriver > 2.43.1
+    testCompile("com.codeborne:phantomjsdriver:1.3.0") {
+        // phantomjs driver pulls in a different selenium version
+        transitive = false
+    }
+    //cucumber
+    testCompile "info.cukes:cucumber-groovy:$cucumberVersion"
+    testCompile "info.cukes:cucumber-junit:$cucumberVersion"
+    testCompile "info.cukes:cucumber-java:$cucumberVersion"
+    testCompile "info.cukes:cucumber-html:0.2.3"
+    // geb
+    testCompile "org.gebish:geb-core:$gebVersion"
+    testCompile "org.gebish:geb-gradle:$gebVersion"
+    // spock - just in case for unit tests
+    testCompile "org.spockframework:spock-core:1.0-groovy-2.4"
+    testCompile "org.gebish:geb-spock:$gebVersion"
+    //junit
+    testCompile "junit:junit:$junitVersion"
+    testCompile "org.gebish:geb-junit4:$gebVersion"
+    //saucelabs
+    testCompile "com.saucelabs:sauce_java_common:$sauceJavaVersion"
+    testCompile "com.saucelabs:sauce_junit:$sauceJavaVersion"
+    testCompile "com.saucelabs:saucerest:$sauceRestVersion"
+    testCompile "com.saucelabs.selenium:sauce-ondemand-driver:$sauceSeleniumVersion"
+    testCompile "com.saucelabs.selenium:selenium-client-factory:$sauceSeleniumVersion"
+    // this contains the sauce-connect binary for the tunnel so must always be latest - sauceLabs will reject anything but the latest binary
+    sauceConnect "com.saucelabs:ci-sauce:1.128"
+}
+
+tasks.withType(Test) {
+    systemProperty "geb.build.baseUrl", System.getenv("GEB_BUILD_LOCAL_BASE_URL")
+    reports {
+        html.destination = reporting.file("test-results/$name")
+        junitXml.destination = reporting.file("$buildDir/test-results/$name")
+    }
+    systemProperty "geb.build.reportsDir", reporting.file("geb/$name")
+    //    jvmArgs "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=5007"
+    outputs.upToDateWhen { false }  // Always run tests
+}
+
+sauceLabs {
+    browsers {
+        firefox_linux_30
+        safari_mac_7 {
+            capabilities platform: "OS X 10.9"
+        }
+        chrome_windows
+    }
+    tasks.withType(Test) {
+        testClassesDir = test.testClassesDir
+        classpath = test.classpath
+    }
+    account {
+        username = System.getenv('SAUCE_USERNAME')
+        accessKey = System.getenv('SAUCE_ACCESS_KEY')
+    }
+    connect {
+        port = 4445
+        timeout 3
+//        additionalOptions = ['--proxy', 'proxy.example.com:8080']
+    }
+}
+
+//adapted from https://github.com/geb/geb-example-gradle
+drivers.each { driver ->
+    task "${driver}Test"(type: Test) {
+        systemProperty "geb.env", driver
+        switch (driver) {
+            case 'chrome':
+                dependsOn unzipChromeDriver
+                def chromedriverFilename = Os.isFamily(Os.FAMILY_WINDOWS) ? "chromedriver.exe" : "chromedriver"
+                systemProperty "webdriver.chrome.driver", new File(unzipChromeDriver.outputs.files.singleFile, chromedriverFilename).absolutePath
+                break
+            case 'phantomjs':
+                dependsOn unzipPhantomjs
+                def phantomjsFilename = Os.isFamily(Os.FAMILY_WINDOWS) ? "phantomjs.exe" : "bin/phantomjs"
+                systemProperty "phantomjs.binary.path", new File(unzipPhantomjs.outputs.files.singleFile, phantomjsFilename).absolutePath
+                break
+
+            case ~/^remote.*$/:
+                systemProperty "geb.build.baseUrl", System.getenv("GEB_BUILD_DOCKER_BASE_URL") ?: System.getenv("GEB_BUILD_LOCAL_BASE_URL")
+                break
+            case 'saucelabs':
+                dependsOn 'allSauceLabsTests'
+                break
+        }
+    }
+}
+
+// To run the tests individually: "./gradlew ${driver}Test"
+
+task allRemoteTests(type: Test) {
+    dependsOn(["remotefirefox", "remotechrome"].collect { "${it}Test" })
+}
+
+task allHeadlessTests(type: Test) {
+    dependsOn('phantomjsTest', 'allRemoteTests')
+}
+
+task allLocalTests(type: Test) {
+    dependsOn(['phantomjs', 'firefox', 'chrome'].collect { "${it}Test" })
+}
+
+task allTests(type: Test) {
+    dependsOn drivers.collect { tasks["${it}Test"] }
+}
+
+test {
+    dependsOn('allSauceLabsTests')
+    enabled = false
+}

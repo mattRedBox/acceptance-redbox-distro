@@ -1,0 +1,94 @@
+/*
+ *
+ *  * Copyright (C) 2017. Queensland Cyber Infrastructure Foundation (http://www.qcif.edu.au/)
+ *  *
+ *  * This program is free software: you can redistribute it and/or modify
+ *  * it under the terms of the GNU General Public License as published by
+ *  * the Free Software Foundation; either version 2 of the License, or
+ *  * (at your option) any later version.
+ *  *
+ *  * This program is distributed in the hope that it will be useful,
+ *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  * GNU General Public License for more details.
+ *  *
+ *  * You should have received a copy of the GNU General Public License along
+ *  * with this program; if not, write to the Free Software Foundation, Inc.,
+ *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ */
+
+import org.apache.tools.ant.taskdefs.condition.Os
+import org.apache.commons.io.FileUtils
+//copied from https://github.com/geb/geb-example-gradle
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "commons-io:commons-io:2.5"
+    }
+}
+
+task downloadChromeDriver {
+    def outputFile = file("$buildDir/webdriver/chromedriver.zip")
+    inputs.property("chromeDriverVersion", chromeDriverVersion)
+    outputs.file(outputFile)
+
+    doLast {
+        def driverOsFilenamePart
+        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            driverOsFilenamePart = "win32"
+        } else if (Os.isFamily(Os.FAMILY_MAC)) {
+            driverOsFilenamePart = "mac64"
+        } else if (Os.isFamily(Os.FAMILY_UNIX)) {
+            driverOsFilenamePart = Os.isArch("amd64") ? "linux64" : "linux32"
+        }
+        FileUtils.copyURLToFile(new URL("http://chromedriver.storage.googleapis.com/${chromeDriverVersion}/chromedriver_${driverOsFilenamePart}.zip"), outputFile)
+    }
+}
+
+task unzipChromeDriver(type: Copy) {
+    def outputDir = file("$buildDir/webdriver/chromedriver")
+    dependsOn downloadChromeDriver
+    outputs.dir(outputDir)
+
+    from(zipTree(downloadChromeDriver.outputs.files.singleFile))
+    into(outputDir)
+}
+
+task downloadPhantomjs {
+    def osFilenamePart
+    def phantomjsVersion = '2.1.1'
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        osFilenamePart = "windows.zip"
+    } else if (Os.isFamily(Os.FAMILY_MAC)) {
+        osFilenamePart = "macosx.zip"
+    } else if (Os.isFamily(Os.FAMILY_UNIX)) {
+        osFilenamePart = Os.isArch("amd64") ? "linux-x86_64.tar.bz2" : "linux-i686.tar.bz2"
+    }
+
+    def filename = "phantomjs-$phantomjsVersion-$osFilenamePart"
+    def outputFile = file("$buildDir/webdriver/$filename")
+    inputs.property("phantomjsVersion", phantomjsVersion)
+    outputs.file(outputFile)
+
+    doLast {
+        FileUtils.copyURLToFile(new URL("https://bitbucket.org/ariya/phantomjs/downloads/$filename"), outputFile)
+    }
+}
+
+task unzipPhantomjs(type: Copy) {
+    def outputDir = file("$buildDir/webdriver/phantomjs")
+    dependsOn downloadPhantomjs
+    outputs.dir(outputDir)
+
+    def archive = downloadPhantomjs.outputs.files.singleFile
+
+    from(Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_WINDOWS) ? zipTree(archive) : tarTree(archive))
+    into(outputDir)
+    eachFile { FileCopyDetails fcp ->
+        fcp.relativePath = new RelativePath(!fcp.directory, *fcp.relativePath.segments[1..-1])
+    }
+}
