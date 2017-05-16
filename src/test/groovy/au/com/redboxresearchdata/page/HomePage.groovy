@@ -1,6 +1,6 @@
 package au.com.redboxresearchdata.page
+
 import geb.Page
-import org.openqa.selenium.By
 
 /**
  * @author <a href="matt@redboxresearchdata.com.au">Matt Mulholland</a>
@@ -11,7 +11,7 @@ class HomePage extends Page {
     static at = { $("h2#page-heading").text() == "Everything" }
 
     static content = {
-        loginLink(required: false) {$("#user-info .login-now")}
+        loginLink(required: false) { $("#user-info .login-now") }
         loginForm { $("form#login") }
         loginName { loginForm.find("#username") }
         loginPass { loginForm.find("input[id='password']") }
@@ -33,7 +33,7 @@ class HomePage extends Page {
     }
 
     def isLoggedIn() {
-        waitFor {logoutLink}.isDisplayed()
+        waitFor { logoutLink }.isDisplayed()
         !loginForm.isDisplayed()
         !loginLink.isDisplayed()
     }
@@ -41,4 +41,4 @@ class HomePage extends Page {
     def isLoginDisplayed() {
         loginForm.isDisplayed()
     }
- }
+}

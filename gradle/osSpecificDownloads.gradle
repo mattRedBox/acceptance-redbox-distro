@@ -20,7 +20,7 @@
 
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.apache.commons.io.FileUtils
-//copied from https://github.com/geb/geb-example-gradle
+//adapted from https://github.com/geb/geb-example-gradle
 
 buildscript {
     repositories {

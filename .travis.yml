@@ -1,15 +1,15 @@
-sudo: required
-services:
-  - docker
-
+language: groovy
+jdk:
+- oraclejdk8
+script: ./gradlew clean test
+before_cache:
+- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
 env:
-  COMPOSE_VERSION: 1.4.1
-
-before_install:
- - curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
- - chmod +x docker-compose
- - sudo mv docker-compose /usr/local/bin
-
-script:
-  - docker-compose build
-  - docker-compose run test
+  global:
+  - secure: b1tFuNChR0vpZxRFzCTswmPI5IZilydCgJjcqDS9m3wA6UDk+gPvecj9HAbxqKvgcr3GLpw10ALMPuvnMM8ySLwPdP2VJbHm2SiOichoY/1iGCOXJ4X9nrLoF/2FbDwTL1NA3uhhBoStMdDfCFwhYtCW78C6+W06OQq2mCLTCENRC7eeKGikUlHrPi+5YzB/IcEkoWgLlKUrcLwiBBSFYuidk5gJFMxCJa3TC7p7M5C/HGo92uq6/GdUmXPu2YkDoGJCoUg2RRphkiLePRFsJI9RgNzBJVZC1MuqRAT0Cq9UpH+u2dBDv0p0wrDLVjPpRN5TjPek41yaD96DF95GsBFoRcDXGiK+H11JFk2MXEsKsVENE3hsBUA+aoPd492DjASvwALJU+UXwafIzqMp4eCPc6O+HTfqkPTT8xOQ/jEuR2mZmM6kCc3Yh1Tq8lYIrNS3E/5xRIYthulWw1mjhcpkRtXldk7T4XGTzCGhvXkdk3IxOK7eCkgSGPmbSMSCnBiCcxFzlebmvago2FSrDXjFJ+G4pwzKxgqz3QPTeADQmVaFiMOKRWLy7frTDgGfa7gjzqyPrtZYSb4DJFZ1Th/4uafw4iBFrl39e7WhqXWGu7499UOakAWi7GewIA7OimGrQjxyt1nhMZ/xisWX+jdEpCbrlRZW4S+0EnfR+Pc=
+  - secure: Lx4hNreL+lCOhgsQJxrc+nN4YW7bpp2ml+GT3V2ELwm5zrbOgQqH4fliGpBaQ54URqvYGgS9OyAllnBx1O2Jz6A+evDtsFNyHm+8+aIviLczQ3A3KV23cAo6ANECsyUmYv3T48J/hnAs1d+9s0+y26gzTNVqp2Hxhv2aiyi8Uqj+osXykROOxMNC9QIYhag55JwTu9J31kauy1zi6MdoSy4tEI9HtTjXu30Z00yKwb4AOTBci7izQajFMambqPIbO/OA/FSN785N0phAl85x3kKRofWyXG/rhpDb86NCCcDI1D11dXuFDwH6J/z4mCbRtnq9IDNycucua/qw6ZBVlO6rq5Yk8qVx58BV2pKvBp3hvRNojS9dGHWYcagXqN8toUoVt9sU+3ICgLsl/NH8Fd62TW3aDvihTcN4+r6Ql7+M5OYhLH+BzyjEXIVBq8SYRxf6CsjCyNMH4bVlTx3+xuXHmO0Yu1Mtm4in1elyFf1yX4C6kHdFzRb6bY6pL2G2V8JDFFMiXtmM6E9JdhnXTV9Awv7Ne6kZkmZgKebDFQR2W4HWpceeMLqiCvXEJnx92t43I63L2u76IAxlfGYeVhc8jg2/FU5EUS4vO8fsZFyzo39NmaD8nXIAv4OHCG3tyXeD1xr0PP0gRKWr3YJ3udeirEr5cjQujbz4LqXyoO0=

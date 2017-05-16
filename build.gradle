@@ -18,6 +18,7 @@
  *
  */
 
+import au.com.redboxresearchdata.listener.SauceTestListener
 import org.apache.tools.ant.taskdefs.condition.Os
 
 group 'au.com.redboxresearchdata'
@@ -120,15 +121,37 @@ tasks.withType(Test) {
 
 sauceLabs {
     browsers {
-        firefox_linux_30
-        safari_mac_7 {
-            capabilities platform: "OS X 10.9"
+        if (System.getenv('TRAVIS_BUILD_ID')) {
+            all {
+                capabilities([
+                        "build": System.getenv('TRAVIS_BUILD_ID')
+                ])
+            }
         }
-        chrome_windows
+//        firefox_linux_30
+        firefox_linux
+//        safari_mac_7 {
+//            capabilities platform: "OS X 10.9"
+//        }
+//        safari_mac
+//        chrome_mac
+//        chrome_windows
+//        firefox_windows
     }
-    tasks.withType(Test) {
-        testClassesDir = test.testClassesDir
-        classpath = test.classpath
+    task {
+        tasks.withType(Test) {
+            onOutput { descriptor, TestOutputEvent event ->
+                if (event.message.startsWith("sessionId:")) {
+                    logger.lifecycle("Test: " + descriptor + " saucelabs " + event.message)
+                    System.setProperty("sessionId", event.message.replaceFirst("sessionId:", ""))
+                }
+            }
+            options {
+                addTestListener(new SauceTestListener())
+            }
+            testClassesDir = test.testClassesDir
+            classpath = test.classpath
+        }
     }
     account {
         username = System.getenv('SAUCE_USERNAME')
@@ -156,7 +179,6 @@ drivers.each { driver ->
                 def phantomjsFilename = Os.isFamily(Os.FAMILY_WINDOWS) ? "phantomjs.exe" : "bin/phantomjs"
                 systemProperty "phantomjs.binary.path", new File(unzipPhantomjs.outputs.files.singleFile, phantomjsFilename).absolutePath
                 break
-
             case ~/^remote.*$/:
                 systemProperty "geb.build.baseUrl", System.getenv("GEB_BUILD_DOCKER_BASE_URL") ?: System.getenv("GEB_BUILD_LOCAL_BASE_URL")
                 break

@@ -6,6 +6,7 @@ build/
 .settings/
 .classpath
 /build/
+buildSrc/build/
 # Ignore Gradle GUI config
 gradle-app.setting
 
