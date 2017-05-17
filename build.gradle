@@ -120,7 +120,7 @@ tasks.withType(Test) {
 
 sauceLabs {
     browsers {
-        if (System.getenv('TRAVIS_BUILD_ID')) {
+        if (System.getenv('TRAVIS_BUILD_NUMBER')) {
             all {
                 capabilities([
                         "build": System.getenv('TRAVIS_BUILD_ID')
