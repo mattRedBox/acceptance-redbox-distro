@@ -11,5 +11,3 @@ services:
       - redbox
     environment:
       - GEB_BUILD_LOCAL_BASE_URL=http://redbox:9000/redbox
-      - SAUCE_ACCESS_KEY=${SAUCE_ACCESS_KEY}
-      - SAUCE_USERNAME=${SAUCE_USERNAME}
