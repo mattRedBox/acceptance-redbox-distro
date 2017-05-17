@@ -1,14 +1,11 @@
-language: groovy
-jdk:
-- oraclejdk8
-script: ./gradlew clean test
-before_cache:
-- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
-cache:
-  directories:
-  - "$HOME/.gradle/caches/"
-  - "$HOME/.gradle/wrapper/"
+sudo: required
+services:
+  - docker
+install: true
+script:
+  - docker-compose rm -f
+  - docker-compose pull
+  - docker-compose up --build -d
 env:
   global:
   - secure: b1tFuNChR0vpZxRFzCTswmPI5IZilydCgJjcqDS9m3wA6UDk+gPvecj9HAbxqKvgcr3GLpw10ALMPuvnMM8ySLwPdP2VJbHm2SiOichoY/1iGCOXJ4X9nrLoF/2FbDwTL1NA3uhhBoStMdDfCFwhYtCW78C6+W06OQq2mCLTCENRC7eeKGikUlHrPi+5YzB/IcEkoWgLlKUrcLwiBBSFYuidk5gJFMxCJa3TC7p7M5C/HGo92uq6/GdUmXPu2YkDoGJCoUg2RRphkiLePRFsJI9RgNzBJVZC1MuqRAT0Cq9UpH+u2dBDv0p0wrDLVjPpRN5TjPek41yaD96DF95GsBFoRcDXGiK+H11JFk2MXEsKsVENE3hsBUA+aoPd492DjASvwALJU+UXwafIzqMp4eCPc6O+HTfqkPTT8xOQ/jEuR2mZmM6kCc3Yh1Tq8lYIrNS3E/5xRIYthulWw1mjhcpkRtXldk7T4XGTzCGhvXkdk3IxOK7eCkgSGPmbSMSCnBiCcxFzlebmvago2FSrDXjFJ+G4pwzKxgqz3QPTeADQmVaFiMOKRWLy7frTDgGfa7gjzqyPrtZYSb4DJFZ1Th/4uafw4iBFrl39e7WhqXWGu7499UOakAWi7GewIA7OimGrQjxyt1nhMZ/xisWX+jdEpCbrlRZW4S+0EnfR+Pc=

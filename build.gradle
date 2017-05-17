@@ -34,7 +34,6 @@ buildscript {
     ext {
         // The drivers we want to use
         drivers = ["firefox", "chrome", "phantomjs", "remotefirefox", "remotechrome", "saucelabs"]
-
         groovyVersion = '2.4.8'
         gebVersion = '1.1.1'
         seleniumVersion = '2.53.1' //later versions require geckodriver for firefox
